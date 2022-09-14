@@ -48,16 +48,32 @@ func Activation(c echo.Context) error {
 	return c.JSON(http.StatusOK, echo.Map{"message": "激活成功"})
 }
 
-// AgainSendActivation 重新发送激活邮件
-func AgainSendActivation(c echo.Context) error {
-	a := new(forms.EmailS)
+// ResetPassword 重置密码
+func ResetPassword(c echo.Context) error {
+	r := new(forms.ResetPassword)
+	if err := c.Bind(r); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	if err := c.Validate(r); err != nil {
+		return err
+	}
+	err := service.ResetPassword(r)
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, echo.Map{"message": "重置密码成功"})
+}
+
+// AgainSendEmail 重新发送激活或重置密码邮件
+func AgainSendEmail(c echo.Context) error {
+	a := new(forms.SendMailS)
 	if err := c.Bind(a); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 	if err := c.Validate(a); err != nil {
 		return err
 	}
-	err := service.AgainSendActivation(a)
+	err := service.AgainSendEmail(a)
 	if err != nil {
 		return err
 	}
@@ -97,6 +113,7 @@ func Logout(c echo.Context) error {
 	return c.JSON(http.StatusOK, echo.Map{"message": "注销成功, 有缘再见~"})
 }
 
+// Me 个人资料
 func Me(c echo.Context) error {
 	claims, err := internal.Claims(c)
 
@@ -110,7 +127,8 @@ func Me(c echo.Context) error {
 	return c.JSON(http.StatusOK, r)
 }
 
-func Update(c echo.Context) error {
+// UpdateMe 更新个人资料
+func UpdateMe(c echo.Context) error {
 	claims, err := internal.Claims(c)
 	if err != nil {
 		return err
@@ -126,7 +144,7 @@ func Update(c echo.Context) error {
 	m["real_name"] = a.RealName
 	m["email"] = a.Email
 	m["phone"] = a.Phone
-	err = service.Update(claims.Id, m)
+	err = service.UpdateMe(claims.Id, m)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}

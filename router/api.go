@@ -19,8 +19,9 @@ func Register(e *echo.Echo) {
 	g.POST("/login", controller.Login)
 	g.POST("/register", controller.Register)
 	g.GET("/captcha", controller.GetCaptcha)
-	g.PUT("/activation", controller.AgainSendActivation)
+	g.PUT("/email", controller.AgainSendEmail)
 	g.POST("/activation", controller.Activation)
+	g.POST("/password", controller.ResetPassword)
 	a := g.Group("/auth")
 	jwtConfig := middleware.JWTConfig{
 		Claims:     &internal.JwtCustomClaims{},
@@ -29,5 +30,5 @@ func Register(e *echo.Echo) {
 	a.Use(middleware.JWTWithConfig(jwtConfig))
 	a.POST("/logout", controller.Logout)
 	a.GET("/me", controller.Me)
-	a.PUT("/me", controller.Update)
+	a.PUT("/me", controller.UpdateMe)
 }

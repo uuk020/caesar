@@ -20,7 +20,7 @@ import (
 func Register(r *forms.Register) (int64, error) {
 	u := new(model.User)
 	code := internal.RandomCode()
-	key := "cache:" + r.Email
+	key := "cache:activation:" + r.Email
 	val, err := global.Redis.Get(key).Result()
 	if err != nil && err != redis.Nil {
 		return 0, err
@@ -32,7 +32,7 @@ func Register(r *forms.Register) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	msg := fmt.Sprintf("欢迎注册账号, 验证码为%s(5 分钟过期), 请勿转发他人", code)
+	msg := fmt.Sprintf("欢迎注册账号, 验证码为 %s(5 分钟过期), 请勿转发他人", code)
 	if internal.SendMail([]string{r.Email}, "凯撒密码网注册验证码", msg) {
 		if err := global.Redis.Set(key, code, 5*time.Minute).Err(); err != nil {
 			return 0, err
@@ -42,10 +42,15 @@ func Register(r *forms.Register) (int64, error) {
 	return 0, errors.New("邮件发送失败, 请稍后再试")
 }
 
-func AgainSendActivation(a *forms.EmailS) error {
+func AgainSendEmail(a *forms.SendMailS) error {
 	u := new(model.User)
 	code := internal.RandomCode()
-	key := "cache:" + a.Email
+
+	key := "cache:activation:" + a.Email
+	if a.Type == "password" {
+		key = "cache:password:" + a.Email
+	}
+
 	val, err := global.Redis.Get(key).Result()
 	if err != nil && err != redis.Nil {
 		return err
@@ -56,11 +61,24 @@ func AgainSendActivation(a *forms.EmailS) error {
 	if err := u.Find("email", a.Email); err != nil {
 		return err
 	}
-	if u.Status == 1 || u.Status == 2 {
-		return errors.New("该用户已经激活或注销了")
+
+	msg := fmt.Sprintf("欢迎注册账号, 验证码为 %s(5 分钟过期), 请勿转发他人", code)
+	subject := "欢迎注册凯撒密码管理-注册激活码"
+
+	if a.Type == "activation" {
+		if u.Status == 1 {
+			return errors.New("该用户已经激活了")
+		}
+	} else {
+		msg = fmt.Sprintf("重置密码, 验证码为 %s(5 分钟过期), 请勿转发他人", code)
+		subject = "凯撒密码管理-重置密码"
 	}
-	msg := fmt.Sprintf("欢迎注册账号, 验证码为%s(5 分钟过期), 请勿转发他人", code)
-	if internal.SendMail([]string{a.Email}, "凯撒密码网注册验证码", msg) {
+
+	if u.Status == 2 {
+		return errors.New("查询不到用户")
+	}
+
+	if internal.SendMail([]string{a.Email}, subject, msg) {
 		if err := global.Redis.Set(key, code, 5*time.Minute).Err(); err != nil {
 			return err
 		}
@@ -71,7 +89,7 @@ func AgainSendActivation(a *forms.EmailS) error {
 
 // Activation 激活用户
 func Activation(a *forms.Activation) error {
-	key := "cache:" + a.Email
+	key := "cache:activation:" + a.Email
 	val, err := global.Redis.Get(key).Result()
 	if err != nil {
 		return err
@@ -84,8 +102,11 @@ func Activation(a *forms.Activation) error {
 	if err != nil {
 		return err
 	}
-	if u.Status == 1 || u.Status == 2 {
-		return errors.New("该用户已经激活或注销了")
+	if u.Status == 1 {
+		return errors.New("该用户已经激活")
+	}
+	if u.Status == 2 {
+		return errors.New("查询不到该用户")
 	}
 	_, err = u.UpdateOneField("status", 1, "email", a.Email)
 	if err != nil {
@@ -95,6 +116,41 @@ func Activation(a *forms.Activation) error {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func ResetPassword(r *forms.ResetPassword) error {
+	key := "cache:password:" + r.Email
+	val, err := global.Redis.Get(key).Result()
+	if err != nil {
+		return err
+	}
+	if val != r.Code {
+		return errors.New("验证码不一致")
+	}
+	u := new(model.User)
+	err = u.Find("email", r.Email)
+	if err != nil {
+		return err
+	}
+	if u.Status == 2 {
+		return errors.New("查询不到该用户")
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(r.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	_, err = u.UpdateOneField("password", hash, "email", r.Email)
+	if err != nil {
+		return err
+	}
+	err = global.Redis.Del(key).Err()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -118,7 +174,7 @@ func Login(l *forms.Login, ip string) (string, error) {
 		return "", errors.New("用户尚未激活")
 	}
 	if u.Status == 2 {
-		return "", errors.New("找不到该用户")
+		return "", errors.New("查询不到该用户")
 	}
 
 	o := new(model.Oauth)
@@ -182,7 +238,7 @@ func Logout(id int64) error {
 		return err
 	}
 	if u.Status == 2 {
-		return errors.New("已经注销过了")
+		return errors.New("查询不到该用户")
 	}
 	_, err := u.UpdateOneField("status", 2, "id", id)
 	if err != nil {
@@ -207,7 +263,7 @@ func Me(id int64) (*echo.Map, error) {
 	return r, nil
 }
 
-func Update(id int64, m map[string]interface{}) error {
+func UpdateMe(id int64, m map[string]interface{}) error {
 	u := new(model.User)
 	if err := u.Find("id", id); err != nil {
 		return err

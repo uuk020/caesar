@@ -26,7 +26,19 @@ type EmailS struct {
 	Email string `form:"email" json:"email" validate:"required,email"`
 }
 
+type SendMailS struct {
+	EmailS
+	Type string `form:"type" json:"type" validate:"required"`
+}
+
 type Activation struct {
 	EmailS
 	Code string `form:"code" json:"code" validate:"required,min=6,max=6"`
+}
+
+type ResetPassword struct {
+	EmailS
+	Code       string `form:"code" json:"code" validate:"required,min=6,max=6"`
+	Password   string `form:"password" json:"password" validate:"required,min=6,max=12"`
+	RePassword string `form:"re_password" json:"re_password" validate:"required,eqfield=Password"`
 }

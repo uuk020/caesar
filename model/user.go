@@ -103,8 +103,10 @@ func (u *User) Create(r *forms.Register) (int64, error) {
 }
 
 func (u *User) UpdateOneField(uF string, uV interface{}, wF string, wV interface{}) (int64, error) {
-	s := "UPDATE `user` SET " + uF + " = ? WHERE " + wF + " = ?"
-	result, err := global.DB.Exec(s, uV, wV)
+	nowUnix := caesarInternal.GetNowTimestamp()
+
+	s := "UPDATE `user` SET " + uF + " = ?, updated_at = ? WHERE " + wF + " = ?"
+	result, err := global.DB.Exec(s, uV, nowUnix, wV)
 	if err != nil {
 		return 0, err
 	}
