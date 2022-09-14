@@ -10,7 +10,7 @@
 ### 安装使用
 * 下载安装
   ```shell
-    git clone git@github.com:uuk020/caesar.git && go build main.go 
+    git clone git@github.com:uuk020/caesar.git 
   ```
 * 初始化
   ```text
