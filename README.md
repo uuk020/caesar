@@ -1,6 +1,6 @@
 <h1 align="center"> Caesar </h1>
 
-<p align="center">echo 框架构建的简单密码管理 Web 应用后端 API</p>
+<p align="center">echo 框架构建的简单密码管理 Web 应用后端 API 接口</p>
 
 ### 环境需求
 * go 版本不低于 1.18
