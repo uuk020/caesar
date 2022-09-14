@@ -1,0 +1,36 @@
+# 项目名称
+name: "caesar"
+# 项目简介
+description: "一个类似 1password 管理密码的 web 简单项目"
+# web 端口
+port: 8888
+# 日志存储位置
+logAddr: "./log/"
+# 调试模式
+debug: true
+# 时间格式
+timezone: "Asia/Shanghai"
+# jwt key
+secret_key: "secret"
+
+# 数据库配置
+mysql:
+  name: "root"
+  host: "127.0.0.1"
+  port: 3306
+  password: "123456"
+  db_name: "caesar"
+  max_open_conns: 200
+  max_idle_conns: 10
+
+redis:
+  host: 127.0.0.1
+  port: 6379
+  password: "123456"
+  password: ""
+
+email:
+  name: "XXXXXXXXX@163.com"
+  password: "XXXXXXXXXX"
+  host: "smtp.163.com"
+  port: 25
