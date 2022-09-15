@@ -66,20 +66,25 @@ func (u *User) Create(r *forms.Register) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
+	mHash, err := bcrypt.GenerateFromPassword([]byte(r.MainPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return 0, err
+	}
 	data := map[string]interface{}{
-		"name":       r.UserName,
-		"password":   hash,
-		"email":      r.Email,
-		"real_name":  r.RealName,
-		"phone":      r.Phone,
-		"status":     0,
-		"created_at": nowUnix,
-		"updated_at": nowUnix,
+		"name":          r.UserName,
+		"password":      hash,
+		"main_password": mHash,
+		"email":         r.Email,
+		"real_name":     r.RealName,
+		"phone":         r.Phone,
+		"status":        0,
+		"created_at":    nowUnix,
+		"updated_at":    nowUnix,
 	}
 
 	if queryRe.Id > 0 {
 		if queryRe.Status == 2 {
-			s := "UPDATE `user` SET `name` = :name, `password` = :password, `email` = :email, " +
+			s := "UPDATE `user` SET `name` = :name, `password` = :password, `main_password` = :main_password, `email` = :email, " +
 				"`real_name` = :real_name, `phone` = :phone, " + "`status` = :status, `created_at` = :created_at, `updated_at` = :updated_at WHERE id = :id"
 			data["id"] = queryRe.Id
 			if _, err := global.DB.NamedExec(s, data); err != nil {
@@ -89,8 +94,8 @@ func (u *User) Create(r *forms.Register) (int64, error) {
 		}
 		return 0, errors.New("已经创建过用户了")
 	}
-	s := "INSERT INTO `user`(name, password, email, real_name, phone, status, created_at, updated_at) VALUE(:name, " +
-		":password, :email, :real_name, :phone, :status, :created_at, :updated_at)"
+	s := "INSERT INTO `user`(name, password, main_password, email, real_name, phone, status, created_at, updated_at) VALUE(:name, " +
+		":password, :main_password, :email, :real_name, :phone, :status, :created_at, :updated_at)"
 	ret, err := global.DB.NamedExec(s, data)
 	if err != nil {
 		return 0, err

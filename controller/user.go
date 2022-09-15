@@ -89,9 +89,9 @@ func Login(c echo.Context) error {
 	if err := c.Validate(l); err != nil {
 		return err
 	}
-	// if !store.Verify(l.CaptchaId, l.Captcha, true) {
-	// 	return echo.NewHTTPError(http.StatusBadRequest, "验证码错误")
-	// }
+	if !store.Verify(l.CaptchaId, l.Captcha, true) {
+		return echo.NewHTTPError(http.StatusBadRequest, "验证码错误")
+	}
 	ip := c.RealIP()
 	token, err := service.Login(l, ip)
 	if err != nil {

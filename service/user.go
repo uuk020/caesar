@@ -269,7 +269,7 @@ func UpdateMe(id int64, m map[string]interface{}) error {
 		return err
 	}
 	if u.Status == 2 {
-		return errors.New("已经注销过了")
+		return errors.New("查询不到该用户")
 	}
 	_, err := u.UpdateMultField(id, m)
 	if err != nil {

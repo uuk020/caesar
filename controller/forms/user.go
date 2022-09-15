@@ -1,10 +1,10 @@
 package forms
 
 type Login struct {
-	UserName string `form:"user_name" json:"user_name" validate:"required"`
-	Password string `form:"password" json:"password" validate:"required,min=6"`
-	// Captcha   string `form:"captcha" json:"captcha" validate:"required,min=5,max=5"`
-	// CaptchaId string `form:"captcha_id" json:"captcha_id" validate:"required"`
+	UserName  string `form:"user_name" json:"user_name" validate:"required"`
+	Password  string `form:"password" json:"password" validate:"required,min=6"`
+	Captcha   string `form:"captcha" json:"captcha" validate:"required,min=5,max=5"`
+	CaptchaId string `form:"captcha_id" json:"captcha_id" validate:"required"`
 }
 
 type CommonS struct {
@@ -16,10 +16,11 @@ type CommonS struct {
 type Register struct {
 	UserName string `form:"user_name" json:"user_name" validate:"required,min=5"`
 	CommonS
-	Password   string `form:"password" json:"password" validate:"required,min=6,max=12"`
-	RePassword string `form:"re_password" json:"re_password" validate:"required,eqfield=Password"`
-	Captcha    string `form:"captcha" json:"captcha" validate:"required,min=5,max=5"`
-	CaptchaId  string `form:"captcha_id" json:"captcha_id" validate:"required"`
+	Password     string `form:"password" json:"password" validate:"required,min=6,max=12,complexpassword"`
+	RePassword   string `form:"re_password" json:"re_password" validate:"required,eqfield=Password"`
+	MainPassword string `form:"main_password" json:"main_password" validate:"required,nefield=Password,complexpassword"`
+	Captcha      string `form:"captcha" json:"captcha" validate:"required,min=5,max=5"`
+	CaptchaId    string `form:"captcha_id" json:"captcha_id" validate:"required"`
 }
 
 type EmailS struct {
