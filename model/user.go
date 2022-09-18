@@ -15,15 +15,16 @@ import (
 )
 
 type User struct {
-	Id        int64  `json:"id" db:"id"`
-	Name      string `json:"name" db:"name"`
-	Password  string `db:"password"`
-	Email     string `json:"email" db:"email"`
-	RealName  string `db:"real_name"`
-	Phone     string `db:"phone"`
-	Status    uint8  `db:"status"`
-	CreatedAt int64  `json:"created_at" db:"created_at"`
-	UpdatedAt int64  `json:"updated_at" db:"updated_at"`
+	Id           int64  `json:"id" db:"id"`
+	Name         string `json:"name" db:"name"`
+	Password     string `db:"password"`
+	MainPassword string `db:"main_password"`
+	Email        string `json:"email" db:"email"`
+	RealName     string `db:"real_name"`
+	Phone        string `db:"phone"`
+	Status       uint8  `db:"status"`
+	CreatedAt    int64  `json:"created_at" db:"created_at"`
+	UpdatedAt    int64  `json:"updated_at" db:"updated_at"`
 }
 
 func (u *User) Find(f string, v interface{}) error {
