@@ -6,7 +6,7 @@ CREATE TABLE `user` (
     `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(30) DEFAULT '' COMMENT '账号',
     `password` VARCHAR(200) DEFAULT '' COMMENT '密码',
-    `main_password` VARCHAR(200) DEFAULT '' COMMENT '主密码(管理账号加密的)'
+    `main_password` VARCHAR(200) DEFAULT '' COMMENT '主密码',
     `email`  VARCHAR(40) DEFAULT '' COMMENT '邮箱',
     `real_name` VARCHAR(30) DEFAULT '' COMMENT '姓名',
     `phone` VARCHAR(15) DEFAULT '' COMMENT '手机',
