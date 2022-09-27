@@ -75,30 +75,7 @@ func main() {
 	e.Debug = global.Setting.Debug
 
 	// Save log
-	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
-		LogStatus:    true,
-		LogURI:       true,
-		LogMethod:    true,
-		LogUserAgent: true,
-		LogError:     true,
-		LogRemoteIP:  true,
-		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
-			if v.Status != http.StatusOK {
-				file := fmt.Sprintf("%s%s.log", global.Setting.LogAddr, caesarInternal.GetNowFormatTodayTime())
-				fd, err := os.OpenFile(file, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
-				if err != nil {
-					return err
-				}
-				s := "Request: time:" + v.StartTime.Local().String() + ", uri:" + v.URI + ", method:" + v.Method + ", user-agent:" + v.UserAgent + ", remote-ip:" + v.RemoteIP + ", error:" + v.Error.Error() + "\n"
-				if _, err := fd.WriteString(s); err != nil {
-					return err
-				}
-				defer fd.Close()
-			}
-			fmt.Printf("REQUEST: time: %v, uri: %v, status: %v, method: %v, user-agent: %v\n", v.StartTime.Local().String(), v.URI, v.Status, v.Method, v.UserAgent)
-			return nil
-		},
-	}))
+	e.Use(middleware.RequestLoggerWithConfig(caesarInternal.NewLoggerConfig()))
 	e.Use(middleware.Recover())
 
 	// validate

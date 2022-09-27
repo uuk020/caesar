@@ -1,7 +1,7 @@
 # 项目名称
 name: "caesar"
 # 项目简介
-description: "一个类似 1password 管理密码的 web 简单项目"
+description: "echo 框架构建的简单密码管理 Web 应用后端 API 接口"
 # web 端口
 port: 8888
 # 日志存储位置

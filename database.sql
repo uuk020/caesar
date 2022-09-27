@@ -14,7 +14,7 @@ CREATE TABLE `user` (
     `created_at` INT(30) UNSIGNED NOT NULL DEFAULT 0,
     `updated_at` INT(30) UNSIGNED NOT NULL DEFAULT 0,
     PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- oauth 表
 DROP TABLE IF EXISTS `oauth_access_tokens`;
@@ -29,4 +29,45 @@ CREATE TABLE `oauth_access_tokens` (
     `updated_at` INT(30) UNSIGNED NOT NULL DEFAULT 0,
     PRIMARY KEY (`id`),
     KEY `fr_user_id` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 用户账号密码表
+DROP TABLE IF EXISTS `acccount`;
+CREATE TABLE `account` (
+    `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `user_id` INT(11) DEFAULT 0 COMMENT '外键: user 表 id',
+    `name` VARCHAR(200) DEFAULT '' COMMENT '账号用户名(加密)',
+    `email` VARCHAR(200) DEFAULT '' COMMENT '账号邮箱(加密)',
+    `password` VARCHAR(200) DEFAULT '' COMMENT '账号密码(加密)',
+    `platform` CHAR(10) DEFAULT '' COMMENT '平台',
+    `url` CHAR(50) DEFAULT '' COMMENT '网站地址',
+    `created_at` INT(30) UNSIGNED NOT NULL DEFAULT 0,
+    `updated_at` INT(30) UNSIGNED NOT NULL DEFAULT 0,
+    PRIMARY KEY (`id`),
+    KEY `fr_user_id` (`user_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 用户操作日志
+DROP TABLE IF EXISTS `account_log`;
+CREATE TABLE `account_log`(
+    `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `account_id` INT(11) DEFAULT 0 COMMENT '外键: account 表 id',
+    `type` TINYINT(1) DEFAULT 0 COMMENT '0-创建, 1-查看, 2-编辑 3-分享',
+    `created_at` INT(30) UNSIGNED NOT NULL DEFAULT 0,
+    `updated_at` INT(30) UNSIGNED NOT NULL DEFAULT 0,
+    PRIMARY KEY (`id`),
+    KEY `fr_account_id` (`account_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- 用户分享统计
+DROP TABLE IF EXISTS `account_share_statistics`;
+CREATE TABLE `account_share_statistics`(
+    `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `account_id` INT(11) DEFAULT 0 COMMENT '外键: account 表 id',
+    `count` SMALLINT(11) DEFAULT 0 COMMENT '次数'
+    `created_at` INT(30) UNSIGNED NOT NULL DEFAULT 0,
+    `updated_at` INT(30) UNSIGNED NOT NULL DEFAULT 0,
+    PRIMARY KEY (`id`),
+    KEY `fr_account_id` (`account_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+

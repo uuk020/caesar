@@ -153,3 +153,30 @@ func (u *User) UpdateMultField(id int64, m map[string]interface{}) (int64, error
 	}
 	return rowsAffected, nil
 }
+
+func (u *User) Logout(id int64) error {
+	tx := global.DB.MustBegin()
+
+	nowUnix := caesarInternal.GetNowTimestamp()
+	userSql := "UPDATE `user` SET status = 2, updated_at = ? WHERE id = ?"
+	_, err := tx.Exec(userSql, nowUnix, id)
+	if err != nil {
+		return err
+	}
+	accountSql := "DELETE FROM account WHERE user_id = ?"
+	_, err = tx.Exec(accountSql, id)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+		} else if err != nil {
+			tx.Rollback()
+		} else {
+			err = tx.Commit()
+		}
+	}()
+	return nil
+}

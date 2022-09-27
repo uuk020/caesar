@@ -240,8 +240,7 @@ func Logout(id int64) error {
 	if u.Status == 2 {
 		return errors.New("查询不到该用户")
 	}
-	_, err := u.UpdateOneField("status", 2, "id", id)
-	if err != nil {
+	if err := u.Logout(id); err != nil {
 		return err
 	}
 	return nil
@@ -253,7 +252,7 @@ func Me(id int64) (*echo.Map, error) {
 		return nil, err
 	}
 	if u.Status == 2 {
-		return nil, errors.New("已经注销过了")
+		return nil, errors.New("查询不到该用户")
 	}
 	r := &echo.Map{
 		"real_name": u.RealName,
@@ -274,6 +273,19 @@ func UpdateMe(id int64, m map[string]interface{}) error {
 	_, err := u.UpdateMultField(id, m)
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+// IsMainPassword - 是否是主密码
+func IsMainPassword(userId int64, mainPassword string) error {
+	u := new(model.User)
+	if err := u.Find("id", userId); err != nil {
+		return errors.New("查询不到用户")
+	}
+	err := bcrypt.CompareHashAndPassword([]byte(u.MainPassword), []byte(mainPassword))
+	if err != nil {
+		return errors.New("主密码不一致")
 	}
 	return nil
 }
