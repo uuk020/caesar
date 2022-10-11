@@ -12,6 +12,8 @@ debug: true
 timezone: "Asia/Shanghai"
 # jwt key
 secret_key: "secret"
+# aes key length, 限制16,24,32
+aes_key_length: 16
 
 # 数据库配置
 mysql:

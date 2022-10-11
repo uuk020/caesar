@@ -5,6 +5,7 @@ import (
 	"caesar/internal"
 	"caesar/service"
 	"net/http"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 )
@@ -15,7 +16,7 @@ func CreateAccount(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	r := new(forms.Account)
+	r := new(forms.AccountCreate)
 	if err := c.Bind(r); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
@@ -32,13 +33,13 @@ func CreateAccount(c echo.Context) error {
 	})
 }
 
-// ReadAccount - 查看平台账号
+// ReadAccount 查看平台账号
 func ReadAccount(c echo.Context) error {
 	claims, err := internal.Claims(c)
 	if err != nil {
 		return err
 	}
-	a := new(forms.AccountParams)
+	a := new(forms.AccountRead)
 	if err := c.Bind(a); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
@@ -46,6 +47,64 @@ func ReadAccount(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 	r, err := service.ReadAccount(a, claims.Id)
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, r)
+}
+
+// UpdateAccount 更新平台账号
+func UpdateAccount(c echo.Context) error {
+	claims, err := internal.Claims(c)
+	if err != nil {
+		return err
+	}
+	a := new(forms.AccountUpdate)
+	if err := c.Bind(a); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	if err := c.Validate(a); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	r, err := service.UpdateAccount(a, claims.Id)
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, r)
+}
+
+// DeleteAccount 删除平台账号
+func DeleteAccount(c echo.Context) error {
+	claims, err := internal.Claims(c)
+	if err != nil {
+		return err
+	}
+	a := new(forms.AccountRead)
+	if err := c.Bind(a); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	if err := c.Validate(a); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	accountId, err := strconv.Atoi(a.ID)
+	if err != nil {
+		return err
+	}
+	err = service.DeleteAccount(a.MainPassword, accountId, int(claims.Id))
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, echo.Map{"message": "删除成功"})
+}
+
+// GetLog 获取日志
+func GetLog(c echo.Context) error {
+	accountIdParam := c.Param("id")
+	accountId, err := strconv.Atoi(accountIdParam)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	r, err := service.GetLog(accountId)
 	if err != nil {
 		return err
 	}

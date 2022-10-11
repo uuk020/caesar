@@ -58,16 +58,3 @@ CREATE TABLE `account_log`(
     PRIMARY KEY (`id`),
     KEY `fr_account_id` (`account_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- 用户分享统计
-DROP TABLE IF EXISTS `account_share_statistics`;
-CREATE TABLE `account_share_statistics`(
-    `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `account_id` INT(11) DEFAULT 0 COMMENT '外键: account 表 id',
-    `count` SMALLINT(11) DEFAULT 0 COMMENT '次数'
-    `created_at` INT(30) UNSIGNED NOT NULL DEFAULT 0,
-    `updated_at` INT(30) UNSIGNED NOT NULL DEFAULT 0,
-    PRIMARY KEY (`id`),
-    KEY `fr_account_id` (`account_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-

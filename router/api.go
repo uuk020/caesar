@@ -33,4 +33,7 @@ func Register(e *echo.Echo) {
 	a.PUT("/me", controller.UpdateMe)
 	a.POST("/account", controller.CreateAccount)
 	a.GET("/account/:id", controller.ReadAccount)
+	a.PUT("/account/:id", controller.UpdateAccount)
+	a.DELETE("/account/:id", controller.DeleteAccount)
+	a.GET("/account/:id/log", controller.GetLog)
 }

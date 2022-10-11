@@ -8,20 +8,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-const (
-	LogSatasCreate = iota
-	LogSatasView
-	LogSatasEdit
-	LogSatasShare
-)
-
-var StatusText = [4]string{
-	LogSatasCreate: "创建",
-	LogSatasView:   "查看",
-	LogSatasEdit:   "编辑",
-	LogSatasShare:  "分享",
-}
-
 type Account struct {
 	Id        int64  `json:"id" db:"id"`
 	UserId    int64  `json:"user_id" db:"user_id"`
@@ -35,21 +21,21 @@ type Account struct {
 }
 
 // CreateAccount 创建平台账户
-func (a *Account) CreateAccount(f *forms.Account, userId int64) error {
+func (a *Account) CreateAccount(f *forms.AccountCreate, userId int64) error {
 	tx := global.DB.MustBegin()
 
 	nowUnix := caesarInternal.GetNowTimestamp()
 
 	// 加密
-	encryptName, err := caesarInternal.AesEncrypt(f.Name, f.MainPassword, 16)
+	encryptName, err := caesarInternal.AesEncrypt(f.Name, f.MainPassword, global.Setting.AesKeyLength)
 	if err != nil {
 		return err
 	}
-	encryptEmail, err := caesarInternal.AesEncrypt(f.Email, f.MainPassword, 16)
+	encryptEmail, err := caesarInternal.AesEncrypt(f.Email, f.MainPassword, global.Setting.AesKeyLength)
 	if err != nil {
 		return err
 	}
-	encryptPassword, err := caesarInternal.AesEncrypt(f.Password, f.MainPassword, 16)
+	encryptPassword, err := caesarInternal.AesEncrypt(f.Password, f.MainPassword, global.Setting.AesKeyLength)
 	if err != nil {
 		return err
 	}
@@ -68,7 +54,11 @@ func (a *Account) CreateAccount(f *forms.Account, userId int64) error {
 	if err != nil {
 		return err
 	}
+
 	id, err := ret.LastInsertId()
+	if err != nil {
+		return err
+	}
 
 	logSql := "INSERT INTO `account_log`(`account_id`, `type`, `created_at`, `updated_at`) VALUES (:account_id, :type, :created_at, :updated_at)"
 	_, err = tx.NamedExec(logSql, map[string]interface{}{
@@ -77,10 +67,6 @@ func (a *Account) CreateAccount(f *forms.Account, userId int64) error {
 		"created_at": nowUnix,
 		"updated_at": nowUnix,
 	})
-	if err != nil {
-		return err
-	}
-
 	if err != nil {
 		return err
 	}
@@ -105,6 +91,74 @@ func (a *Account) CreateAccount(f *forms.Account, userId int64) error {
 	return nil
 }
 
+type UpdateAccountField struct {
+	ID           int64
+	Name         string
+	Email        string
+	Password     string
+	MainPassword string
+}
+
+func (a *Account) UpdateAccount(u UpdateAccountField) error {
+	tx := global.DB.MustBegin()
+
+	nowUnix := caesarInternal.GetNowTimestamp()
+
+	err := tx.Get(a, "SELECT * FROM account WHERE `id` = ?", u.ID)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+		} else if err != nil {
+			tx.Rollback()
+		} else {
+			err = tx.Commit()
+		}
+	}()
+
+	// 加密
+	encryptName, err := caesarInternal.AesEncrypt(u.Name, u.MainPassword, global.Setting.AesKeyLength)
+	if err != nil {
+		return err
+	}
+	encryptEmail, err := caesarInternal.AesEncrypt(u.Email, u.MainPassword, global.Setting.AesKeyLength)
+	if err != nil {
+		return err
+	}
+	encryptPassword, err := caesarInternal.AesEncrypt(u.Password, u.MainPassword, global.Setting.AesKeyLength)
+	if err != nil {
+		return err
+	}
+
+	data := map[string]interface{}{
+		"name":       encryptName,
+		"email":      encryptEmail,
+		"password":   encryptPassword,
+		"updated_at": nowUnix,
+		"id":         u.ID,
+	}
+	accounSql := "UPDATE `account` SET `name`=:name, `email`=:email, `password`=:password, `updated_at`=:updated_at WHERE id = :id"
+	_, err = tx.NamedExec(accounSql, data)
+	if err != nil {
+		return err
+	}
+
+	logSql := "INSERT INTO `account_log`(`account_id`, `type`, `created_at`, `updated_at`) VALUES (:account_id, :type, :created_at, :updated_at)"
+	_, err = tx.NamedExec(logSql, map[string]interface{}{
+		"account_id": u.ID,
+		"type":       LogSatasEdit,
+		"created_at": nowUnix,
+		"updated_at": nowUnix,
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // FindById 根据平台 ID 查询平台信息
 func (a *Account) FindById(id int64) error {
 	s := "SELECT * FROM `account` WHERE id = ? ORDER BY `id` DESC LIMIT 1"
@@ -126,5 +180,32 @@ func (a *Account) FindById(id int64) error {
 		return err
 	}
 
+	return nil
+}
+
+// DeleteAccount 删除平台账号
+func (a *Account) DeleteAccount(id int64) error {
+	tx := global.DB.MustBegin()
+	s := "DELETE FROM `account` WHERE `id` = ?"
+	_, err := tx.Exec(s, id)
+	if err != nil {
+		return err
+	}
+
+	s1 := "DELETE FROM `account_log` WHERE `account_id` = ?"
+	_, err = tx.Exec(s1, id)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+		} else if err != nil {
+			tx.Rollback()
+		} else {
+			err = tx.Commit()
+		}
+	}()
 	return nil
 }
