@@ -24,35 +24,27 @@ type AccountLog struct {
 	UpdatedAt int64 `json:"updated_at" db:"updated_at"`
 }
 
-func (l *AccountLog) Select(accountId int64) (map[string]interface{}, error) {
+func LogSelect(accountId int64, page, pageSize int) ([]AccountLog, int) {
 	var count int
 	err := global.DB.Get(&count, "SELECT count(*) FROM `account_log` WHERE `account_id` = ?", accountId)
 	if err != nil {
-		return nil, err
+		return nil, count
 	}
-	m := make([]map[string]interface{}, count)
-	rows, err := global.DB.Queryx("SELECT * FROM `account_log` WHERE `account_id` = ?", accountId)
+
+	offset := pageSize * (page - 1)
+	rows, err := global.DB.Queryx("SELECT * FROM `account_log` WHERE `account_id` = ? ORDER BY `id` DESC LIMIT ? OFFSET ?", accountId, pageSize, offset)
 	if err != nil {
-		return nil, err
+		return nil, count
 	}
-	i := 0
+
+	var m []AccountLog
 	for rows.Next() {
-		err := rows.StructScan(&l)
+		a := AccountLog{}
+		err := rows.StructScan(&a)
 		if err != nil {
-			return nil, err
+			return nil, 0
 		}
-		m[i] = map[string]interface{}{
-			"id":         l.Id,
-			"account_id": l.AccountId,
-			"type":       l.Status,
-			"type_text":  StatusText[l.Status],
-			"created_at": l.CreatedAt,
-			"updated_at": l.UpdatedAt,
-		}
-		i++
+		m = append(m, a)
 	}
-	r := make(map[string]interface{}, 2)
-	r["data"] = m
-	r["count"] = count
-	return r, nil
+	return m, count
 }

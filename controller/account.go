@@ -104,9 +104,24 @@ func GetLog(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
-	r, err := service.GetLog(accountId)
+
+	pageParam := c.QueryParam("page")
+	page, err := strconv.Atoi(pageParam)
 	if err != nil {
-		return err
+		page = 1
 	}
-	return c.JSON(http.StatusOK, r)
+
+	pageSizeParam := c.QueryParam("page_size")
+	pageSize, err := strconv.Atoi(pageSizeParam)
+	if err != nil {
+		pageSize = 10
+	}
+
+	r, count := service.GetLog(accountId, page, pageSize)
+	return c.JSON(http.StatusOK, List{
+		Data:     r,
+		Count:    count,
+		Page:     page,
+		PageSize: pageSize,
+	})
 }

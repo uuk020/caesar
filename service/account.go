@@ -102,7 +102,11 @@ func DeleteAccount(mainPassword string, accountId, userId int) error {
 }
 
 // GetLog 获取日志
-func GetLog(accountId int) (map[string]interface{}, error) {
-	m := new(model.AccountLog)
-	return m.Select(int64(accountId))
+func GetLog(accountId, page, pageSize int) ([]interface{}, int) {
+	d, c := model.LogSelect(int64(accountId), page, pageSize)
+	var r []interface{}
+	for _, v := range d {
+		r = append(r, v)
+	}
+	return r, c
 }
