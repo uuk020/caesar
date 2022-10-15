@@ -212,13 +212,36 @@ func (a *Account) DeleteAccount(id, userId int64) error {
 	return nil
 }
 
+// getListWhere 构建列表 where 条件
+func getListWhere(a *forms.AccountList) (string, map[string]interface{}) {
+	var s strings.Builder
+	m := make(map[string]any, 3)
+	if a.Platform != "" {
+		s.WriteString(" AND `platform` LIKE :platform")
+		m["platform"] = "%" + a.Platform + "%"
+	}
+	if a.DateStart != "" && a.DateEnd != "" {
+		s.WriteString(" AND `created_at` BETWEEN :date_start AND :date_end")
+		m["date_start"] = a.DateStart
+		m["date_end"] = a.DateEnd
+	} else if a.DateStart != "" {
+		s.WriteString(" AND `created_at` >= :date_start")
+		m["date_start"] = a.DateStart
+	} else if a.DateEnd != "" {
+		s.WriteString(" AND `created_at` <= :date_end")
+		m["date_end"] = a.DateEnd
+	}
+
+	return s.String(), m
+}
+
+// AccountList 列表
 func AccountList(a *forms.AccountList, userId int64) ([]Account, int) {
 	var (
 		count int
 		s, s1 strings.Builder
 		r     []Account
 	)
-	s1.WriteString("SELECT count(*) FROM `account` WHERE `user_id` = :user_id")
 
 	offset := a.PageSize * (a.Page - 1)
 	m := map[string]interface{}{
@@ -231,29 +254,15 @@ func AccountList(a *forms.AccountList, userId int64) ([]Account, int) {
 	}
 
 	s.WriteString("SELECT * FROM `account` WHERE `user_id` = :user_id")
-	if a.Platform != "" {
-		s.WriteString(" AND `platform` LIKE :platform")
-		s1.WriteString(" AND `platform` LIKE :platform")
-		m["platform"] = "%" + a.Platform + "%"
-		m1["platform"] = "%" + a.Platform + "%"
-	}
-	if a.DateStart != "" && a.DateEnd != "" {
-		s.WriteString(" AND `created_at` BETWEEN :date_start AND :date_end")
-		m["date_start"] = a.DateStart
-		m["date_end"] = a.DateEnd
-		s1.WriteString(" AND `created_at` BETWEEN :date_start AND :date_end")
-		m1["date_start"] = a.DateStart
-		m1["date_end"] = a.DateEnd
-	} else if a.DateStart != "" {
-		s.WriteString(" AND `created_at` >= :date_start")
-		m["date_start"] = a.DateStart
-		s1.WriteString(" AND `created_at` >= :date_start")
-		m1["date_start"] = a.DateStart
-	} else if a.DateEnd != "" {
-		s.WriteString(" AND `created_at` <= :date_end")
-		m["date_end"] = a.DateEnd
-		s1.WriteString(" AND `created_at` <= :date_end")
-		m1["date_end"] = a.DateEnd
+	s1.WriteString("SELECT count(*) FROM `account` WHERE `user_id` = :user_id")
+	whereSql, where := getListWhere(a)
+	if whereSql != "" && len(where) != 0 {
+		s.WriteString(whereSql)
+		s1.WriteString(whereSql)
+		for k, v := range where {
+			m1[k] = v
+			m[k] = v
+		}
 	}
 
 	s.WriteString(" ORDER BY `id` DESC LIMIT :page_size OFFSET :offset")
