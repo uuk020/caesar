@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/duke-git/lancet/v2/random"
 	"github.com/go-redis/redis"
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
@@ -19,7 +20,7 @@ import (
 
 func Register(r *forms.Register) (int64, error) {
 	u := new(model.User)
-	code := internal.RandomCode()
+	code := random.RandString(6)
 	key := "cache:activation:" + r.Email
 	val, err := global.Redis.Get(key).Result()
 	if err != nil && err != redis.Nil {
@@ -44,7 +45,7 @@ func Register(r *forms.Register) (int64, error) {
 
 func AgainSendEmail(a *forms.SendMailS) error {
 	u := new(model.User)
-	code := internal.RandomCode()
+	code := random.RandString(6)
 
 	key := "cache:activation:" + a.Email
 	if a.Type == "password" {

@@ -3,7 +3,6 @@ package model
 import (
 	"caesar/controller/forms"
 	"caesar/global"
-	caesarInternal "caesar/internal"
 	"database/sql"
 	"errors"
 	"sort"
@@ -11,6 +10,7 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/duke-git/lancet/v2/datetime"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -61,7 +61,7 @@ func (u *User) Create(r *forms.Register) (int64, error) {
 		return 0, err
 	}
 
-	nowUnix := caesarInternal.GetNowTimestamp()
+	nowUnix := datetime.NewUnixNow().ToUnix()
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(r.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -109,7 +109,7 @@ func (u *User) Create(r *forms.Register) (int64, error) {
 }
 
 func (u *User) UpdateOneField(uF string, uV interface{}, wF string, wV interface{}) (int64, error) {
-	nowUnix := caesarInternal.GetNowTimestamp()
+	nowUnix := datetime.NewUnixNow().ToUnix()
 
 	s := "UPDATE `user` SET " + uF + " = ?, updated_at = ? WHERE " + wF + " = ?"
 	result, err := global.DB.Exec(s, uV, nowUnix, wV)
@@ -157,7 +157,7 @@ func (u *User) UpdateMultField(id int64, m map[string]interface{}) (int64, error
 func (u *User) Logout(id int64) error {
 	tx := global.DB.MustBegin()
 
-	nowUnix := caesarInternal.GetNowTimestamp()
+	nowUnix := datetime.NewUnixNow().ToUnix()
 	userSql := "UPDATE `user` SET status = 2, updated_at = ? WHERE id = ?"
 	_, err := tx.Exec(userSql, nowUnix, id)
 	if err != nil {

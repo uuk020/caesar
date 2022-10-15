@@ -2,7 +2,6 @@ package service
 
 import (
 	"caesar/controller/forms"
-	"caesar/global"
 	"caesar/internal"
 	"caesar/model"
 	"strconv"
@@ -40,7 +39,7 @@ func UpdateAccount(a *forms.AccountUpdate, userId int64) (map[string]interface{}
 		Password:     a.Password,
 		MainPassword: a.MainPassword,
 	}
-	err = m.UpdateAccount(f)
+	err = m.UpdateAccount(f, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -54,25 +53,32 @@ func UpdateAccount(a *forms.AccountUpdate, userId int64) (map[string]interface{}
 }
 
 // ReadAccount 读取平台账号信息
-func ReadAccount(a *forms.AccountRead, id int64) (map[string]interface{}, error) {
+func ReadAccount(a *forms.AccountRead, userId int64) (map[string]interface{}, error) {
 	m := new(model.Account)
-	if err := IsMainPassword(id, a.MainPassword); err != nil {
+	if err := IsMainPassword(userId, a.MainPassword); err != nil {
 		return nil, err
 	}
-	err := m.FindById(id)
+
+	accountId, err := strconv.Atoi(a.ID)
 	if err != nil {
 		return nil, err
 	}
+
+	err = m.FindById(int64(accountId), userId)
+	if err != nil {
+		return nil, err
+	}
+
 	// 解密
-	name, err := internal.AesDecrypt(m.Name, a.MainPassword, global.Setting.AesKeyLength)
+	name, err := internal.AesDecrypt(m.Name, a.MainPassword)
 	if err != nil {
 		return nil, err
 	}
-	email, err := internal.AesDecrypt(m.Email, a.MainPassword, global.Setting.AesKeyLength)
+	email, err := internal.AesDecrypt(m.Email, a.MainPassword)
 	if err != nil {
 		return nil, err
 	}
-	password, err := internal.AesDecrypt(m.Password, a.MainPassword, global.Setting.AesKeyLength)
+	password, err := internal.AesDecrypt(m.Password, a.MainPassword)
 	if err != nil {
 		return nil, err
 	}
@@ -86,16 +92,16 @@ func ReadAccount(a *forms.AccountRead, id int64) (map[string]interface{}, error)
 }
 
 // DeleteAccount 删除平台账号
-func DeleteAccount(mainPassword string, accountId, userId int) error {
+func DeleteAccount(mainPassword string, accountId, userId int64) error {
 	m := new(model.Account)
-	if err := IsMainPassword(int64(userId), mainPassword); err != nil {
+	if err := IsMainPassword(userId, mainPassword); err != nil {
 		return err
 	}
-	err := m.FindById(int64(accountId))
+	err := m.FindById(accountId, userId)
 	if err != nil {
 		return err
 	}
-	if err := m.DeleteAccount(int64(accountId)); err != nil {
+	if err := m.DeleteAccount(accountId, userId); err != nil {
 		return err
 	}
 	return nil
@@ -104,6 +110,24 @@ func DeleteAccount(mainPassword string, accountId, userId int) error {
 // GetLog 获取日志
 func GetLog(accountId, page, pageSize int) ([]interface{}, int) {
 	d, c := model.LogSelect(int64(accountId), page, pageSize)
+	if len(d) == 0 {
+		empty := make([]interface{}, 0)
+		return empty, 0
+	}
+	var r []interface{}
+	for _, v := range d {
+		r = append(r, v)
+	}
+	return r, c
+}
+
+// GetList 获取列表
+func GetList(a *forms.AccountList, userId int64) ([]interface{}, int) {
+	d, c := model.AccountList(a, userId)
+	if len(d) == 0 {
+		empty := make([]interface{}, 0)
+		return empty, 0
+	}
 	var r []interface{}
 	for _, v := range d {
 		r = append(r, v)

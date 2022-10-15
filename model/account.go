@@ -4,7 +4,9 @@ import (
 	"caesar/controller/forms"
 	"caesar/global"
 	caesarInternal "caesar/internal"
+	"strings"
 
+	"github.com/duke-git/lancet/v2/datetime"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -24,18 +26,18 @@ type Account struct {
 func (a *Account) CreateAccount(f *forms.AccountCreate, userId int64) error {
 	tx := global.DB.MustBegin()
 
-	nowUnix := caesarInternal.GetNowTimestamp()
+	nowUnix := datetime.NewUnixNow().ToUnix()
 
 	// 加密
-	encryptName, err := caesarInternal.AesEncrypt(f.Name, f.MainPassword, global.Setting.AesKeyLength)
+	encryptName, err := caesarInternal.AesEncrypt(f.Name, f.MainPassword)
 	if err != nil {
 		return err
 	}
-	encryptEmail, err := caesarInternal.AesEncrypt(f.Email, f.MainPassword, global.Setting.AesKeyLength)
+	encryptEmail, err := caesarInternal.AesEncrypt(f.Email, f.MainPassword)
 	if err != nil {
 		return err
 	}
-	encryptPassword, err := caesarInternal.AesEncrypt(f.Password, f.MainPassword, global.Setting.AesKeyLength)
+	encryptPassword, err := caesarInternal.AesEncrypt(f.Password, f.MainPassword)
 	if err != nil {
 		return err
 	}
@@ -99,12 +101,12 @@ type UpdateAccountField struct {
 	MainPassword string
 }
 
-func (a *Account) UpdateAccount(u UpdateAccountField) error {
+func (a *Account) UpdateAccount(u UpdateAccountField, userId int64) error {
 	tx := global.DB.MustBegin()
 
-	nowUnix := caesarInternal.GetNowTimestamp()
+	nowUnix := datetime.NewUnixNow().ToUnix()
 
-	err := tx.Get(a, "SELECT * FROM account WHERE `id` = ?", u.ID)
+	err := tx.Get(a, "SELECT * FROM account WHERE `id` = ? AND `user_id` = ?", u.ID, userId)
 	if err != nil {
 		return err
 	}
@@ -120,15 +122,15 @@ func (a *Account) UpdateAccount(u UpdateAccountField) error {
 	}()
 
 	// 加密
-	encryptName, err := caesarInternal.AesEncrypt(u.Name, u.MainPassword, global.Setting.AesKeyLength)
+	encryptName, err := caesarInternal.AesEncrypt(u.Name, u.MainPassword)
 	if err != nil {
 		return err
 	}
-	encryptEmail, err := caesarInternal.AesEncrypt(u.Email, u.MainPassword, global.Setting.AesKeyLength)
+	encryptEmail, err := caesarInternal.AesEncrypt(u.Email, u.MainPassword)
 	if err != nil {
 		return err
 	}
-	encryptPassword, err := caesarInternal.AesEncrypt(u.Password, u.MainPassword, global.Setting.AesKeyLength)
+	encryptPassword, err := caesarInternal.AesEncrypt(u.Password, u.MainPassword)
 	if err != nil {
 		return err
 	}
@@ -160,14 +162,14 @@ func (a *Account) UpdateAccount(u UpdateAccountField) error {
 }
 
 // FindById 根据平台 ID 查询平台信息
-func (a *Account) FindById(id int64) error {
-	s := "SELECT * FROM `account` WHERE id = ? ORDER BY `id` DESC LIMIT 1"
-	err := global.DB.Get(a, s, id)
+func (a *Account) FindById(id, userId int64) error {
+	s := "SELECT * FROM `account` WHERE `id` = ? AND `user_id` = ? ORDER BY `id` DESC LIMIT 1"
+	err := global.DB.Get(a, s, id, userId)
 	if err != nil {
 		return err
 	}
 
-	nowUnix := caesarInternal.GetNowTimestamp()
+	nowUnix := datetime.NewUnixNow().ToUnix()
 
 	logSql := "INSERT INTO `account_log`(`account_id`, `type`, `created_at`, `updated_at`) VALUES (:account_id, :type, :created_at, :updated_at)"
 	_, err = global.DB.NamedExec(logSql, map[string]interface{}{
@@ -184,10 +186,10 @@ func (a *Account) FindById(id int64) error {
 }
 
 // DeleteAccount 删除平台账号
-func (a *Account) DeleteAccount(id int64) error {
+func (a *Account) DeleteAccount(id, userId int64) error {
 	tx := global.DB.MustBegin()
-	s := "DELETE FROM `account` WHERE `id` = ?"
-	_, err := tx.Exec(s, id)
+	s := "DELETE FROM `account` WHERE `id` = ? AND `user_id` = ?"
+	_, err := tx.Exec(s, id, userId)
 	if err != nil {
 		return err
 	}
@@ -208,4 +210,77 @@ func (a *Account) DeleteAccount(id int64) error {
 		}
 	}()
 	return nil
+}
+
+func AccountList(a *forms.AccountList, userId int64) ([]Account, int) {
+	var (
+		count int
+		s, s1 strings.Builder
+		r     []Account
+	)
+	s1.WriteString("SELECT count(*) FROM `account` WHERE `user_id` = :user_id")
+
+	offset := a.PageSize * (a.Page - 1)
+	m := map[string]interface{}{
+		"user_id":   userId,
+		"offset":    offset,
+		"page_size": a.PageSize,
+	}
+	m1 := map[string]interface{}{
+		"user_id": userId,
+	}
+
+	s.WriteString("SELECT * FROM `account` WHERE `user_id` = :user_id")
+	if a.Platform != "" {
+		s.WriteString(" AND `platform` LIKE :platform")
+		s1.WriteString(" AND `platform` LIKE :platform")
+		m["platform"] = "%" + a.Platform + "%"
+		m1["platform"] = "%" + a.Platform + "%"
+	}
+	if a.DateStart != "" && a.DateEnd != "" {
+		s.WriteString(" AND `created_at` BETWEEN :date_start AND :date_end")
+		m["date_start"] = a.DateStart
+		m["date_end"] = a.DateEnd
+		s1.WriteString(" AND `created_at` BETWEEN :date_start AND :date_end")
+		m1["date_start"] = a.DateStart
+		m1["date_end"] = a.DateEnd
+	} else if a.DateStart != "" {
+		s.WriteString(" AND `created_at` >= :date_start")
+		m["date_start"] = a.DateStart
+		s1.WriteString(" AND `created_at` >= :date_start")
+		m1["date_start"] = a.DateStart
+	} else if a.DateEnd != "" {
+		s.WriteString(" AND `created_at` <= :date_end")
+		m["date_end"] = a.DateEnd
+		s1.WriteString(" AND `created_at` <= :date_end")
+		m1["date_end"] = a.DateEnd
+	}
+
+	s.WriteString(" ORDER BY `id` DESC LIMIT :page_size OFFSET :offset")
+	s1.WriteString(" LIMIT 1")
+
+	rows, err := global.DB.NamedQuery(s.String(), m)
+	if err != nil {
+		return r, 0
+	}
+
+	rows1, err := global.DB.NamedQuery(s1.String(), m1)
+	if err != nil {
+		return r, 0
+	}
+	for rows1.Next() {
+		if err := rows1.Scan(&count); err != nil {
+			return r, 0
+		}
+	}
+
+	for rows.Next() {
+		d := Account{}
+		err = rows.StructScan(&d)
+		if err != nil {
+			return nil, 0
+		}
+		r = append(r, d)
+	}
+	return r, count
 }

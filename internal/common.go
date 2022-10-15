@@ -3,46 +3,17 @@ package internal
 import (
 	"bytes"
 	"caesar/global"
-	"crypto/aes"
-	"crypto/cipher"
-	"encoding/base64"
 	"errors"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"net/smtp"
 	"os"
-	"strconv"
-	"time"
 
+	"github.com/duke-git/lancet/v2/cryptor"
+	"github.com/duke-git/lancet/v2/datetime"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
-
-func GetNowFormatTodayTime() string {
-	cstSh, _ := time.LoadLocation(global.Setting.Timezone)
-	now := time.Now().In(cstSh)
-	dateStr := fmt.Sprintf("%02d-%02d-%02d", now.Year(), int(now.Month()),
-		now.Day())
-
-	return dateStr
-}
-
-func GetNowTimestamp() int64 {
-	cstSh, _ := time.LoadLocation(global.Setting.Timezone)
-	now := time.Now().In(cstSh)
-	return now.Unix()
-}
-
-func RandomCode() string {
-	var s string
-	rand.Seed(time.Now().UnixNano())
-	for i := 0; i < 6; i++ {
-		r := rand.Intn(9)
-		s += strconv.Itoa(r)
-	}
-	return s
-}
 
 func SendMail(to []string, subject string, msg string) bool {
 	emailConfig := global.Setting.Email
@@ -54,80 +25,46 @@ func SendMail(to []string, subject string, msg string) bool {
 	return err != nil
 }
 
-func AesEncrypt(orig string, key string, keySize int) (string, error) {
-	origData := []byte(orig)
+func AesEncrypt(data, key string) (string, error) {
+	keyByte, err := keyPadding([]byte(key))
+	if err != nil {
+		return "", err
+	}
+	encrypted := cryptor.AesCbcEncrypt([]byte(data), keyByte)
+	if len(encrypted) == 0 {
+		return "", errors.New("加密失败")
+	}
+	return cryptor.Base64StdEncode(string(encrypted)), nil
+}
 
+func AesDecrypt(data, key string) (string, error) {
+	keyByte, err := keyPadding([]byte(key))
+	if err != nil {
+		return "", err
+	}
+	decodeData := cryptor.Base64StdDecode(data)
+	if decodeData == "" {
+		return "", errors.New("base64 解码失败")
+	}
+	decrypted := cryptor.AesCbcDecrypt([]byte(decodeData), keyByte)
+	if len(decrypted) == 0 {
+		return "", errors.New("解密失败")
+	}
+	return string(decrypted), nil
+}
+
+func keyPadding(key []byte) ([]byte, error) {
+	keySize := global.Setting.AesKeyLength
 	switch keySize {
 	default:
-		return "", errors.New("keySize 参数错误")
+		return nil, errors.New("AesKeyLength 配置有误")
 	case 16, 24, 32:
 		break
 	}
 
-	k := keyPadding([]byte(key), keySize)
-
-	block, err := aes.NewCipher(k)
-
-	if err != nil {
-		return "", err
-	}
-
-	blockSize := block.BlockSize()
-	origData = PKCS7Padding(origData, blockSize)
-	blockMode := cipher.NewCBCEncrypter(block, k[:blockSize])
-
-	cryted := make([]byte, len(origData))
-	blockMode.CryptBlocks(cryted, origData)
-	return base64.StdEncoding.EncodeToString(cryted), nil
-}
-
-func AesDecrypt(cryted string, key string, keySize int) (string, error) {
-	crytedByte, err := base64.StdEncoding.DecodeString(cryted)
-	if err != nil {
-		return "", err
-	}
-
-	switch keySize {
-	default:
-		return "", errors.New("keySize 参数错误")
-	case 16, 24, 32:
-		break
-	}
-
-	k := keyPadding([]byte(key), keySize)
-	block, err := aes.NewCipher(k)
-	if err != nil {
-		return "", err
-	}
-
-	blockSize := block.BlockSize()
-	blockMode := cipher.NewCBCDecrypter(block, k[:blockSize])
-
-	orig := make([]byte, len(crytedByte))
-	blockMode.CryptBlocks(orig, crytedByte)
-
-	orig = PKCS7UnPadding(orig)
-	return string(orig), nil
-}
-
-func keyPadding(key []byte, keySize int) []byte {
 	padding := keySize - len(key)
 	padText := bytes.Repeat([]byte{byte(padding)}, padding)
-	return append(key, padText...)
-}
-
-// 补码
-func PKCS7Padding(ciphertext []byte, blocksize int) []byte {
-	padding := blocksize - len(ciphertext)%blocksize
-	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
-	return append(ciphertext, padtext...)
-}
-
-// 去码
-func PKCS7UnPadding(origData []byte) []byte {
-	length := len(origData)
-	unpadding := int(origData[length-1])
-	return origData[:(length - unpadding)]
+	return append(key, padText...), nil
 }
 
 // logger 配置
@@ -141,7 +78,7 @@ func NewLoggerConfig() middleware.RequestLoggerConfig {
 		LogRemoteIP:  true,
 		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
 			if v.Status != http.StatusOK {
-				file := fmt.Sprintf("%s%s.log", global.Setting.LogAddr, GetNowFormatTodayTime())
+				file := fmt.Sprintf("%s%s.log", global.Setting.LogAddr, datetime.GetNowDate())
 				fd, err := os.OpenFile(file, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 				if err != nil {
 					return err

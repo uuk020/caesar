@@ -15,6 +15,7 @@ require (
 )
 
 require (
+	github.com/duke-git/lancet/v2 v2.1.7 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect

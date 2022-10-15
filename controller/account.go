@@ -90,7 +90,7 @@ func DeleteAccount(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	err = service.DeleteAccount(a.MainPassword, accountId, int(claims.Id))
+	err = service.DeleteAccount(a.MainPassword, int64(accountId), claims.Id)
 	if err != nil {
 		return err
 	}
@@ -123,5 +123,29 @@ func GetLog(c echo.Context) error {
 		Count:    count,
 		Page:     page,
 		PageSize: pageSize,
+	})
+}
+
+// GetList 获取列表
+func GetList(c echo.Context) error {
+	claims, err := internal.Claims(c)
+	if err != nil {
+		return err
+	}
+
+	a := new(forms.AccountList)
+	if err := c.Bind(a); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	if err := c.Validate(a); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	r, count := service.GetList(a, claims.Id)
+	return c.JSON(http.StatusOK, List{
+		Data:     r,
+		Count:    count,
+		Page:     a.Page,
+		PageSize: a.PageSize,
 	})
 }
