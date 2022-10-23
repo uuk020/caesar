@@ -21,8 +21,8 @@
   go build main.go
   ```   
 * 部署Go应用
-- [Nginx 部署](https://eddycjy.gitbook.io/golang/di-3-ke-gin/nginx)
-- [Caddy 部署](https://caddyserver.com/docs/)
+  - [Nginx 部署](https://eddycjy.gitbook.io/golang/di-3-ke-gin/nginx)
+  - [Caddy 部署](https://caddyserver.com/docs/)
 
 ## 接口文档
 - [接口文档说明](./caesar-api.md)
