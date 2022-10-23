@@ -1,5 +1,6 @@
-CREATE DATABASE `caesar` CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_general_ci';
 
+-- MySQL 版本
+CREATE DATABASE `caesar` CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_general_ci';
 -- 用户表
 DROP TABLE IF EXISTS `user`;
 CREATE TABLE `user` (
@@ -58,3 +59,43 @@ CREATE TABLE `account_log`(
     PRIMARY KEY (`id`),
     KEY `fr_account_id` (`account_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+-- sqlite3 
+CREATE TABLE "user" (
+  "id" integer NOT NULL DEFAULT 0 PRIMARY KEY AUTOINCREMENT,
+  "name" text(30) NOT NULL DEFAULT '',
+  "password" text(200) NOT NULL DEFAULT '',
+  "main_password" text(200) NOT NULL DEFAULT '',
+  "email" text(40) NOT NULL DEFAULT '',
+  "real_name" text(30) NOT NULL DEFAULT '',
+  "phone" text(15) NOT NULL DEFAULT '',
+  "status" integer(1) NOT NULL DEFAULT 0,
+  "created_at" integer(30) NOT NULL DEFAULT 0,
+  "updated_at" integer(30) NOT NULL DEFAULT 0
+);
+
+CREATE TABLE "oauth_access_tokens" (
+  "id" INTEGER(10) NOT NULL DEFAULT 0 PRIMARY KEY AUTOINCREMENT,
+  "user_id" INTEGER(10) NOT NULL,
+  "client_ip" TEXT(30) NOT NULL DEFAULT '',
+  "token" TEXT(500) NOT NULL DEFAULT '',
+  "revoked" integer(1) NOT NULL DEFAULT 0,
+  "expires_at" integer(30) NOT NULL,
+  "created_at" integer(30) NOT NULL,
+  "updated_at" integer(30) NOT NULL,
+  CONSTRAINT "fr_user_id" FOREIGN KEY ("user_id") REFERENCES "user" ("id")
+);
+
+CREATE TABLE "account" (
+  "id" integer NOT NULL DEFAULT 0 PRIMARY KEY AUTOINCREMENT,
+  "user_id" integer(10) NOT NULL DEFAULT 0,
+  "name" text(200) NOT NULL DEFAULT '',
+  "email" text(200) NOT NULL DEFAULT '',
+  "password" text(200) NOT NULL DEFAULT '',
+  "platform" text(10) NOT NULL DEFAULT '',
+  "url" text(50) NOT NULL DEFAULT '',
+  "created_at" integer(30) NOT NULL DEFAULT 0,
+  "updated_at" integer(30) NOT NULL,
+  CONSTRAINT "fr_user_id" FOREIGN KEY ("user_id") REFERENCES "user" ("id")
+);

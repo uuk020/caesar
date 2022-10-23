@@ -8,14 +8,18 @@ import (
 	caesarRouter "caesar/router"
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 
 	"github.com/go-redis/redis"
-
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
+	_ "github.com/mattn/go-sqlite3"
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/viper"
@@ -25,26 +29,30 @@ func initConfig() {
 	v := viper.New()
 	v.SetConfigFile("./settings.yaml")
 	if err := v.ReadInConfig(); err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
 	server := config.Server{}
 	if err := v.Unmarshal(&server); err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
 	global.Setting = server
 }
 
-func initMySQL() {
-	mysql := global.Setting.Mysql
+func initDb() {
+	db := global.Setting.Db
+	dbType := strings.ToLower(db.DbType)
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-		mysql.Name, mysql.Password, mysql.Host, mysql.Port, mysql.DbName)
-	db, err := sqlx.Connect("mysql", dsn)
-	if err != nil {
-		panic(err)
+		db.Name, db.Password, db.Host, db.Port, db.DbName)
+	if dbType == "sqlite3" {
+		dsn = db.DbName
 	}
-	db.SetMaxOpenConns(global.Setting.Mysql.MaxOpenConns)
-	db.SetMaxIdleConns(global.Setting.Mysql.MaxIdleConns)
-	global.DB = db
+	c, err := sqlx.Connect(dbType, dsn)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	c.SetMaxOpenConns(global.Setting.Db.MaxOpenConns)
+	c.SetMaxIdleConns(global.Setting.Db.MaxIdleConns)
+	global.DB = c
 }
 
 func initRedis() {
@@ -56,14 +64,14 @@ func initRedis() {
 	})
 	_, err := global.Redis.Ping().Result()
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
 }
 
 func init() {
-	// Init config, mysql and redis
+	// Init config, database and redis
 	initConfig()
-	initMySQL()
+	initDb()
 	initRedis()
 }
 
@@ -77,6 +85,9 @@ func main() {
 	// Save log
 	e.Use(middleware.RequestLoggerWithConfig(caesarInternal.NewLoggerConfig()))
 	e.Use(middleware.Recover())
+
+	// CORS
+	e.Use(middleware.CORS())
 
 	// validate
 	caesarValidate.Register(e)

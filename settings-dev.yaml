@@ -12,16 +12,20 @@ debug: true
 timezone: "Asia/Shanghai"
 # jwt key
 secret_key: "secret"
+# json web toke expire day
+jwt_expire_day: 3
 # aes key length, 限制16,24,32
 aes_key_length: 16
 
-# 数据库配置 TODO 数据库支持 sqlite3
-mysql:
+# 数据库配置
+database:
+  db_type: "mysql" # 支持 MySQL 和 SQLite3
   name: "root"
-  host: "127.0.0.1"
+  host: "172.18.0.3"
   port: 3306
   password: "123456"
   db_name: "caesar"
+  # db_name: "caesar.db" SQLite 数据库 db 路径
   max_open_conns: 200
   max_idle_conns: 10
 

@@ -8,13 +8,15 @@ type Server struct {
 	Timezone     string `mapstructure:"timezone"`
 	SecretKey    string `mapstructure:"secret_key"`
 	AesKeyLength int    `mapstructure:"aes_key_length"`
-	Mysql        Mysql  `mapstructure:"mysql"`
+	JwtExpireDay int    `mapstructure:"jwt_expire_day"`
+	Db           Db     `mapstructure:"database"`
 	Redis        Redis  `mapstructure:"redis"`
 	LogAddr      string `mapstructure:"logAddr"`
 	Email        Email  `mapstructure:"email"`
 }
 
-type Mysql struct {
+type Db struct {
+	DbType       string `mapstructure:"db_type"`
 	Name         string `mapstructure:"name"`
 	Host         string `mapstructure:"host"`
 	Port         int    `mapstructure:"port"`

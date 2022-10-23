@@ -11,7 +11,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/duke-git/lancet/v2/datetime"
-	_ "github.com/go-sql-driver/mysql"
 )
 
 type User struct {
@@ -95,7 +94,7 @@ func (u *User) Create(r *forms.Register) (int64, error) {
 		}
 		return 0, errors.New("已经创建过用户了")
 	}
-	s := "INSERT INTO `user`(name, password, main_password, email, real_name, phone, status, created_at, updated_at) VALUE(:name, " +
+	s := "INSERT INTO `user`(name, password, main_password, email, real_name, phone, status, created_at, updated_at) VALUES (:name, " +
 		":password, :main_password, :email, :real_name, :phone, :status, :created_at, :updated_at)"
 	ret, err := global.DB.NamedExec(s, data)
 	if err != nil {
@@ -141,7 +140,7 @@ func (u *User) UpdateMultField(id int64, m map[string]interface{}) (int64, error
 	}
 	sqlBuilder.WriteString("UPDATE `user` SET ")
 	sqlBuilder.WriteString(fieldBuilder.String())
-	sqlBuilder.WriteString(" WEHRE `id` = :id")
+	sqlBuilder.WriteString(" WHERE `id` = :id")
 	d["id"] = id
 	result, err := global.DB.NamedExec(sqlBuilder.String(), d)
 	if err != nil {

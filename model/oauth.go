@@ -1,10 +1,6 @@
 package model
 
-import (
-	"caesar/global"
-
-	_ "github.com/go-sql-driver/mysql"
-)
+import "caesar/global"
 
 type Oauth struct {
 	Id        int64  `json:"id" db:"id"`
@@ -38,7 +34,7 @@ func (o *Oauth) Find(ip string, userId int64) error {
 
 func (o *Oauth) Create(v map[string]interface{}) error {
 	s := "INSERT INTO `oauth_access_tokens`(`user_id`, `client_ip`, `token`, `expires_at`, `created_at`, " +
-		"`updated_at`) VALUES(:user_id, :client_ip, :token, :expires_at, :created_at, :updated_at)"
+		"`updated_at`) VALUES (:user_id, :client_ip, :token, :expires_at, :created_at, :updated_at)"
 	_, err := global.DB.NamedExec(s, v)
 	if err != nil {
 		return err

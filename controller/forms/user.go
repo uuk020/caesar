@@ -8,7 +8,7 @@ type Login struct {
 }
 
 type CommonS struct {
-	RealName string `form:"real_name" json:"real_name" validate:"required,min=3"`
+	RealName string `form:"real_name" json:"real_name" validate:"required,min=2"`
 	Email    string `form:"email" json:"email" validate:"required,email"`
 	Phone    string `form:"phone" json:"phone" validate:"required,chinaphone"`
 }

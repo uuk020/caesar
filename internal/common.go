@@ -22,7 +22,7 @@ func SendMail(to []string, subject string, msg string) bool {
 	err := smtp.SendMail(smtpAddr, auth, emailConfig.Name, to, []byte("From: 凯撒密码网管理员<jie893609357@163.com>\r\n"+
 		"Subject:"+subject+"\r\n"+
 		"\r\n"+msg))
-	return err != nil
+	return err == nil
 }
 
 func AesEncrypt(data, key string) (string, error) {

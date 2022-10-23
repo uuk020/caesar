@@ -3,19 +3,20 @@ module caesar
 go 1.18
 
 require (
+	github.com/duke-git/lancet/v2 v2.1.7
 	github.com/go-playground/validator/v10 v10.11.0
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/labstack/echo/v4 v4.9.0
+	github.com/mattn/go-sqlite3 v1.14.15
 	github.com/mojocn/base64Captcha v1.3.5
 	github.com/spf13/viper v1.13.0
 	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90
 )
 
 require (
-	github.com/duke-git/lancet/v2 v2.1.7 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect

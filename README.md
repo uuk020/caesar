@@ -4,7 +4,7 @@
 
 ### 环境需求
 * go 版本不低于 1.18
-* Mysql 版本不低于 5.7
+* Mysql 版本不低于 5.7 或 sqlite3 版本 3.39
 * Redis 版本不低于 5.0
 
 ### 安装使用
@@ -20,7 +20,12 @@
   ```shell
   go build main.go
   ```   
+* 部署Go应用
+- [Nginx 部署](https://eddycjy.gitbook.io/golang/di-3-ke-gin/nginx)
+- [Caddy 部署](https://caddyserver.com/docs/)
 
+## 接口文档
+- [接口文档说明](./caesar-api.md)
 ## 最后
 欢迎提出 issue 和 pull request
 

@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/duke-git/lancet/v2/datetime"
-	_ "github.com/go-sql-driver/mysql"
 )
 
 type Account struct {
@@ -42,7 +41,7 @@ func (a *Account) CreateAccount(f *forms.AccountCreate, userId int64) error {
 		return err
 	}
 
-	accounSql := "INSERT INTO `account`(`user_id`, `name`, `email`, `password`, `platform`, url, `created_at`, `updated_at`) VALUES(:user_id, :name, :email, :password, :platform, :url, :created_at, :updated_at)"
+	accounSql := "INSERT INTO `account`(`user_id`, `name`, `email`, `password`, `platform`, url, `created_at`, `updated_at`) VALUES (:user_id, :name, :email, :password, :platform, :url, :created_at, :updated_at)"
 	ret, err := tx.NamedExec(accounSql, map[string]interface{}{
 		"user_id":    userId,
 		"name":       encryptName,

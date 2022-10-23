@@ -188,7 +188,7 @@ func Login(l *forms.Login, ip string) (string, error) {
 	}
 
 	now := time.Now()
-	expiresAt := now.Add(time.Hour * 48).Unix()
+	expiresAt := now.Add(time.Hour * (time.Duration(global.Setting.JwtExpireDay * 24))).Unix()
 	createdAt := now.Unix()
 
 	claims := &internal.JwtCustomClaims{
