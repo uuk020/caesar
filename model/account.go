@@ -221,17 +221,17 @@ func getListWhere(a *forms.AccountList) (string, map[string]interface{}) {
 	}
 	if a.DateStart != "" && a.DateEnd != "" {
 		s.WriteString(" AND `created_at` BETWEEN :date_start AND :date_end")
-		sT, _ := datetime.FormatStrToTime(a.DateStart+"00:00:00", "yyyy-mm-dd hh:mm:ss")
-		eT, _ := datetime.FormatStrToTime(a.DateStart+"23:59:59", "yyyy-mm-dd hh:mm:ss")
+		sT, _ := datetime.FormatStrToTime(a.DateStart+" 00:00:00", "yyyy-mm-dd hh:mm:ss")
+		eT, _ := datetime.FormatStrToTime(a.DateStart+" 23:59:59", "yyyy-mm-dd hh:mm:ss")
 		m["date_start"] = sT.Unix()
 		m["date_end"] = eT.Unix()
 	} else if a.DateStart != "" {
 		s.WriteString(" AND `created_at` >= :date_start")
-		sT, _ := datetime.FormatStrToTime(a.DateStart+"00:00:00", "yyyy-mm-dd hh:mm:ss")
+		sT, _ := datetime.FormatStrToTime(a.DateStart+" 00:00:00", "yyyy-mm-dd hh:mm:ss")
 		m["date_start"] = sT.Unix()
 	} else if a.DateEnd != "" {
 		s.WriteString(" AND `created_at` <= :date_end")
-		eT, _ := datetime.FormatStrToTime(a.DateStart+"23:59:59", "yyyy-mm-dd hh:mm:ss")
+		eT, _ := datetime.FormatStrToTime(a.DateStart+" 23:59:59", "yyyy-mm-dd hh:mm:ss")
 		m["date_end"] = eT.Unix()
 	}
 
