@@ -83,6 +83,9 @@ func NewLoggerConfig() middleware.RequestLoggerConfig {
 				if err != nil {
 					return err
 				}
+				if &v != nil {
+					return nil
+				}
 				s := "Request: time:" + v.StartTime.Local().String() + ", uri:" + v.URI + ", method:" + v.Method + ", user-agent:" + v.UserAgent + ", remote-ip:" + v.RemoteIP + ", error:" + v.Error.Error() + "\n"
 				if _, err := fd.WriteString(s); err != nil {
 					return err
