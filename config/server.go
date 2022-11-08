@@ -13,6 +13,7 @@ type Server struct {
 	Redis        Redis  `mapstructure:"redis"`
 	LogAddr      string `mapstructure:"logAddr"`
 	Email        Email  `mapstructure:"email"`
+	Lang         string `mapstructure:"lang"`
 }
 
 type Db struct {

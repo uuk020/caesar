@@ -1,11 +1,17 @@
 package validate
 
 import (
+	"caesar/global"
 	"net/http"
 	"regexp"
 	"unicode"
 
+	"github.com/go-playground/locales/en"
+	"github.com/go-playground/locales/zh"
+	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
+	en_translate "github.com/go-playground/validator/v10/translations/en"
+	zh_translate "github.com/go-playground/validator/v10/translations/zh"
 	"github.com/labstack/echo/v4"
 )
 
@@ -23,8 +29,25 @@ func (cv *CustomValidator) Validate(i interface{}) error {
 	if err != nil {
 		return err
 	}
+
+	enT := en.New()
+	zhT := zh.New()
+	uni := ut.New(enT, zhT, enT)
+	translator, _ := uni.GetTranslator(global.Setting.Lang)
+	switch global.Setting.Lang {
+	case "en":
+		en_translate.RegisterDefaultTranslations(cv.validator, translator)
+	case "zh":
+		zh_translate.RegisterDefaultTranslations(cv.validator, translator)
+	default:
+		en_translate.RegisterDefaultTranslations(cv.validator, translator)
+	}
+
 	if err := cv.validator.Struct(i); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		object, _ := err.(validator.ValidationErrors)
+		for _, key := range object {
+			return echo.NewHTTPError(http.StatusBadRequest, key.Translate(translator))
+		}
 	}
 	return nil
 }

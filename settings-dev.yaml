@@ -16,6 +16,8 @@ secret_key: "secret"
 jwt_expire_day: 3
 # aes key length, 限制16,24,32
 aes_key_length: 16
+# 语言
+lang: "zh"
 
 # 数据库配置
 database:
