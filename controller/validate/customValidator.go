@@ -19,21 +19,13 @@ type CustomValidator struct {
 	validator *validator.Validate
 }
 
-// Validate validates the fields of a struct.
-func (cv *CustomValidator) Validate(i interface{}) error {
-	err := cv.validator.RegisterValidation("chinaphone", chinaPhone)
-	if err != nil {
-		return err
-	}
-	err = cv.validator.RegisterValidation("complexpassword", complexPassword)
-	if err != nil {
-		return err
-	}
+var translator ut.Translator
 
+func NewTranslator(cv *CustomValidator) {
 	enT := en.New()
 	zhT := zh.New()
 	uni := ut.New(enT, zhT, enT)
-	translator, _ := uni.GetTranslator(global.Setting.Lang)
+	translator, _ = uni.GetTranslator(global.Setting.Lang)
 	switch global.Setting.Lang {
 	case "en":
 		en_translate.RegisterDefaultTranslations(cv.validator, translator)
@@ -41,6 +33,31 @@ func (cv *CustomValidator) Validate(i interface{}) error {
 		zh_translate.RegisterDefaultTranslations(cv.validator, translator)
 	default:
 		en_translate.RegisterDefaultTranslations(cv.validator, translator)
+	}
+}
+
+type Func func(fl validator.FieldLevel) bool
+
+func RegisterValidatorFunc(cv *CustomValidator, tag, msg string, fn Func) {
+	_ = cv.validator.RegisterValidation(tag, validator.Func(fn))
+	_ = cv.validator.RegisterTranslation(tag, translator, func(ut ut.Translator) error {
+		return ut.Add(tag, "{0} "+msg, true)
+	}, func(ut ut.Translator, fe validator.FieldError) string {
+		t, _ := ut.T(tag, fe.Field())
+		return t
+	})
+}
+
+// Validate validates the fields of a struct.
+func (cv *CustomValidator) Validate(i interface{}) error {
+	NewTranslator(cv)
+
+	if global.Setting.Lang == "zh" {
+		RegisterValidatorFunc(cv, "chinaphone", "手机格式不符合国内", chinaPhone)
+		RegisterValidatorFunc(cv, "complexpassword", "密码过于简单", complexPassword)
+	} else {
+		RegisterValidatorFunc(cv, "chinaphone", "cell phone format does not match China", chinaPhone)
+		RegisterValidatorFunc(cv, "complexpassword", "password is too simple", complexPassword)
 	}
 
 	if err := cv.validator.Struct(i); err != nil {
