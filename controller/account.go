@@ -25,7 +25,7 @@ func CreateAccount(c echo.Context) error {
 	}
 	id, err := service.CreateAccount(r, claims.Id)
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	return c.JSON(http.StatusOK, echo.Map{
 		"message": "创建成功",
@@ -48,7 +48,7 @@ func ReadAccount(c echo.Context) error {
 	}
 	r, err := service.ReadAccount(a, claims.Id)
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	return c.JSON(http.StatusOK, r)
 }
@@ -68,7 +68,7 @@ func UpdateAccount(c echo.Context) error {
 	}
 	r, err := service.UpdateAccount(a, claims.Id)
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	return c.JSON(http.StatusOK, r)
 }
@@ -88,11 +88,11 @@ func DeleteAccount(c echo.Context) error {
 	}
 	accountId, err := strconv.Atoi(a.ID)
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	err = service.DeleteAccount(a.MainPassword, int64(accountId), claims.Id)
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	return c.JSON(http.StatusOK, echo.Map{"message": "删除成功"})
 }

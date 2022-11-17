@@ -24,7 +24,7 @@ func Register(c echo.Context) error {
 	}
 	id, err := service.Register(r)
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	return c.JSON(http.StatusOK, echo.Map{
 		"message": "创建成功",
@@ -43,7 +43,7 @@ func Activation(c echo.Context) error {
 	}
 	err := service.Activation(a)
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	return c.JSON(http.StatusOK, echo.Map{"message": "激活成功"})
 }
@@ -59,7 +59,7 @@ func ResetPassword(c echo.Context) error {
 	}
 	err := service.ResetPassword(r)
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	return c.JSON(http.StatusOK, echo.Map{"message": "重置密码成功"})
 }
@@ -75,7 +75,7 @@ func AgainSendEmail(c echo.Context) error {
 	}
 	err := service.AgainSendEmail(a)
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	return c.JSON(http.StatusOK, echo.Map{"message": "发送成功, 请查看邮箱"})
 }
@@ -108,7 +108,7 @@ func Logout(c echo.Context) error {
 	}
 	err = service.Logout(claims.Id)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	return c.JSON(http.StatusOK, echo.Map{"message": "注销成功, 有缘再见~"})
 }
@@ -122,7 +122,7 @@ func Me(c echo.Context) error {
 	}
 	r, err := service.Me(claims.Id)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	return c.JSON(http.StatusOK, r)
 }
@@ -146,7 +146,7 @@ func UpdateMe(c echo.Context) error {
 	m["phone"] = a.Phone
 	err = service.UpdateMe(claims.Id, m)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	return c.JSON(http.StatusOK, echo.Map{"message": "更新资料成功"})
 }

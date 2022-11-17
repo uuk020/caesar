@@ -93,7 +93,10 @@ func Activation(a *forms.Activation) error {
 	key := "cache:activation:" + a.Email
 	val, err := global.Redis.Get(key).Result()
 	if err != nil {
-		return err
+		if err == redis.Nil {
+			return errors.New("激活码不存在")
+		}
+		return errors.New("Redis 发生出错误: " + err.Error())
 	}
 	if val != a.Code {
 		return errors.New("验证码不一致")
